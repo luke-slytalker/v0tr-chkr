@@ -1,28 +1,36 @@
 import requests
 from bs4 import BeautifulSoup
+import time
 
-url = "https://voterrecords.com/voters/mi/before+1930/"     # search URL
+##############
+# USE:  python3 main.py > output_file.txt
+# 
+# I'll make it more user-friendly this weekend
+# but for now, we can start sraping and building databases.
+# URL format:  /voters/<state>/search+filter/<page>
+#               /voters/mi/before+1930/2
+
+
+url = "https://voterrecords.com/voters/mi/before+1930/"     # base search URL
 headers = {'User-Agent': 'Mozilla/5.0'}                     # headers so it doesn't think we're scraping
-response = requests.get(url, headers=headers)           # create the http request & store the data in "response"
-soup = BeautifulSoup(response.content, "html.parser")   # initialize a BS object that's intending to parse HTML
 
-# format is:  /voters/<state>/<search+term>/<page number>
-# /voters/mi/before+1930/6  == page 6 of the search results for MI voters born before 1930
+pages = 26375       # how many pages there are according to the website.
+x = 1
 
+while x < pages:
+    page_to_scrape = url + str(x)
+    response = requests.get(page_to_scrape, headers=headers)    # create the http request & store the data in "response"
+    soup = BeautifulSoup(response.text, "html.parser")       # initialize a BS object that's intending to parse HTML
+    table = soup.find('table')
+    rows = ""
+    for tr in table.find_all('tr', itemtype="http://schema.org/Person"):  # iterate thru all the TR tags
+        the_name = tr.span.span.a.span.text
+        print("-----------------")
+        print(the_name)
+        for tds in tr.find_all('td', class_='hidden-xs'):
+            if len(tds.text) > 33:  # filter out tags with no text
+                data = tds.text.strip()  # strip out any extra RETURNS
+                print(data)
 
-# grabbing the number of pages was insanely more difficult than it should have been
-# BS4 wouldn't find the #pageBar ID for the DIV, so I had to get creative...
-x = list()
-for label in soup.find_all('label'):
-    x.append(label.text)
-
-num_of_pages = x[4][10:]
-pages = num_of_pages.replace(',', '')
-
-# we need to look for the first table in the HTML--it's where the voter info is inserted from their DB
-table = soup.find('table')
-
-for tr in table.find_all('tr'):     # iterate thru all the TR tags
-    tds = tr.find_all('td')
-    print(tds)
-
+    x += 1
+    time.sleep(.17)
