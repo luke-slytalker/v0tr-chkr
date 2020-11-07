@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
+# grabs MI voters & filter for ones born before 1930
 url = "https://voterrecords.com/voters/mi/before+1930/"     # base search URL
 headers = {'User-Agent': 'Mozilla/5.0'}                     # headers so it doesn't think we're scraping
 
